@@ -5,11 +5,9 @@ from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product
 # Example Usage
 if __name__ == "__main__":
     import numpy as np
-    np.random.seed(42)
-    x = [0, 0, 2, 2]   # X-coordinates
-    y = [0, 1, 1,  0]   # Y-coordinates
-    z = [0, 0.5, 1.5, 1.0] # Z-coordinates
- 
+    x = [0, 1, 1, 0]   # X-coordinates
+    y = [0, 0, 1,  1]   # Y-coordinates
+    z = [0, 0, 0, 0] # Z-coordinates
     plot_3d_scatter(x, y, z)
 
     exit()

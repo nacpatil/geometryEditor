@@ -84,3 +84,57 @@ def outer_product(vec1, vec2):
     Computes the outer product of two vectors.
     """
     return np.outer(vec1, vec2)
+
+
+import numpy as np
+
+def rotate_coordinates(coords, axis, angle_degrees):
+    """
+    Rotates a list of (x, y, z) coordinates around the specified axis ('x', 'y', or 'z') 
+    by the given angle in degrees.
+
+    :param coords: List of (x, y, z) tuples or NumPy array of shape (N, 3)
+    :param axis: Axis to rotate around ('x', 'y', or 'z')
+    :param angle_degrees: Rotation angle in degrees
+    :return: Rotated coordinates as a NumPy array
+    """
+    # Convert angle to radians
+    angle = np.radians(angle_degrees)
+
+    # Define rotation matrices
+    if axis.lower() == 'x':
+        rotation_matrix = np.array([
+            [1, 0, 0],
+            [0, np.cos(angle), -np.sin(angle)],
+            [0, np.sin(angle), np.cos(angle)]
+        ])
+    elif axis.lower() == 'y':
+        rotation_matrix = np.array([
+            [np.cos(angle), 0, np.sin(angle)],
+            [0, 1, 0],
+            [-np.sin(angle), 0, np.cos(angle)]
+        ])
+    elif axis.lower() == 'z':
+        rotation_matrix = np.array([
+            [np.cos(angle), -np.sin(angle), 0],
+            [np.sin(angle), np.cos(angle), 0],
+            [0, 0, 1]
+        ])
+    else:
+        raise ValueError("Axis must be 'x', 'y', or 'z'")
+
+    # Convert input coordinates to NumPy array
+    coords_array = np.array(coords)
+
+    # Apply rotation
+    rotated_coords = np.dot(coords_array, rotation_matrix.T)
+
+    return rotated_coords
+
+# Example usage
+coords = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # Example coordinates
+angle = 90  # Degrees
+axis = 'z'  # Rotate around z-axis
+
+rotated = rotate_coordinates(coords, axis, angle)
+print("Rotated Coordinates:\n", rotated)
