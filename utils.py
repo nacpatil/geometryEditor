@@ -1,5 +1,5 @@
 import plotly.graph_objects as go
-
+import trimesh
 import numpy as np
 def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
     """
@@ -131,4 +131,36 @@ def rotate_xyz(x, y, z, axis, angle_degrees):
     x[:] = rotated_coords[0].tolist()
     y[:] = rotated_coords[1].tolist()
     z[:] = rotated_coords[2].tolist()
+ 
+
+
+def create_sphere_mesh(subdivisions=5, radius=1.0):
+    """
+    Create a sphere mesh using trimesh and return vertices and face indices
+    in separate lists.
+
+    Args:
+        subdivisions (int): Number of subdivisions for the icosphere.
+        radius (float): Radius of the sphere.
+
+    Returns:
+        tuple: (x, y, z, i, j, k) where:
+            - x, y, z: Lists of vertex coordinates.
+            - i, j, k: Lists of triangle face indices.
+    """
+    # Create the sphere mesh
+    sphere = trimesh.creation.icosphere(subdivisions=subdivisions, radius=radius)
+
+    sphere.visual.vertex_colors = [255, 255, 255, 255]   # RGBA format, A=255 ensures full opacity
+
+    # Extract vertex coordinates
+    vertices = sphere.vertices
+    x, y, z = vertices[:, 0].tolist(), vertices[:, 1].tolist(), vertices[:, 2].tolist()
+
+    # Extract face indices
+    faces = sphere.faces
+    i, j, k = faces[:, 0].tolist(), faces[:, 1].tolist(), faces[:, 2].tolist()
+    sphere.show()
+
+    return x, y, z, i, j, k
  
