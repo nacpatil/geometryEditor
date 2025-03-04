@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import numpy as np
-from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product, rotate_xyz, create_sphere_mesh
+from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product, rotate_xyz, create_sphere_mesh, show_all_plots
 
 # Example Usage
 if __name__ == "__main__":
@@ -30,3 +30,5 @@ if __name__ == "__main__":
 
     # Call the function
     plot_3d_mesh(x, y, z, i, j, k, title="Pyramid Mesh")
+
+    show_all_plots()

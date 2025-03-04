@@ -2,84 +2,14 @@ import plotly.graph_objects as go
 import trimesh
 import numpy as np
 
+# Global figure object to accumulate plots
+global_fig = go.Figure()
 
-def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
+def update_axis_limits(x, y, z):
     """
-    Plots a 3D scatter plot using Plotly with optional lines connecting the points.
-
-    Args:
-        x (array-like): X-coordinates of points.
-        y (array-like): Y-coordinates of points.
-        z (array-like): Z-coordinates of points.
-        title (str): Title of the plot.
-        lines (bool): Whether to draw lines connecting the points. Default is True.
+    Updates the global axis limits to ensure equal aspect ratio.
     """
-    fig = go.Figure()
-
-    # Compute axis limits to keep equal scale
-    x_range = max(x) - min(x)
-    y_range = max(y) - min(y)
-    z_range = max(z) - min(z)
-    max_range = max(x_range, y_range, z_range) / 2
-
-    # Compute centers
-    x_mid = (max(x) + min(x)) / 2
-    y_mid = (max(y) + min(y)) / 2
-    z_mid = (max(z) + min(z)) / 2
-
-    # Scatter points
-    fig.add_trace(go.Scatter3d(
-        x=x, y=y, z=z,
-        mode='markers',
-        marker=dict(size=5, color="red", opacity=0.8),
-        name="Points"
-    ))
-
-    # Add lines if enabled
-    if lines:
-        fig.add_trace(go.Scatter3d(
-            x=x, y=y, z=z,
-            mode='lines',
-            line=dict(color='blue', width=2),
-            name="Lines"
-        ))
-
-    # Correctly set the scene without nesting `scene` inside another `scene`
-    fig.update_layout(
-        title=title,
-        scene=dict(
-            xaxis=dict(title="X Axis", range=[x_mid - max_range, x_mid + max_range]),
-            yaxis=dict(title="Y Axis", range=[y_mid - max_range, y_mid + max_range]),
-            zaxis=dict(title="Z Axis", range=[z_mid - max_range, z_mid + max_range])
-        )
-    )
-
-    fig.show()
-
-
-def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
-    """
-    Plots a 3D mesh using Plotly with equal aspect ratio for x, y, and z axes.
-
-    Args:
-        x (array-like): X-coordinates of vertices.
-        y (array-like): Y-coordinates of vertices.
-        z (array-like): Z-coordinates of vertices.
-        i (array-like): Indices of the first vertex in each triangle.
-        j (array-like): Indices of the second vertex in each triangle.
-        k (array-like): Indices of the third vertex in each triangle.
-        title (str): Title of the plot.
-
-    Example Usage:
-        plot_3d_mesh(x, y, z, i, j, k)
-    """
-    # Create mesh figure
-    fig = go.Figure(data=[go.Mesh3d(
-        x=x, y=y, z=z,
-        i=i, j=j, k=k,
-        opacity=0.5,
-        color='lightblue'
-    )])
+    global global_fig
 
     # Compute axis limits to keep equal scale
     x_range = max(x) - min(x)
@@ -93,8 +23,7 @@ def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
     z_mid = (max(z) + min(z)) / 2
 
     # Apply equal ranges to all axes
-    fig.update_layout(
-        title=title,
+    global_fig.update_layout(
         scene=dict(
             xaxis=dict(title="X Axis", range=[x_mid - max_range, x_mid + max_range]),
             yaxis=dict(title="Y Axis", range=[y_mid - max_range, y_mid + max_range]),
@@ -102,7 +31,56 @@ def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
         )
     )
 
-    fig.show()
+def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
+    """
+    Adds a 3D scatter plot to the global figure with optional connecting lines.
+    """
+    global global_fig
+
+    # Scatter points
+    global_fig.add_trace(go.Scatter3d(
+        x=x, y=y, z=z,
+        mode='markers',
+        marker=dict(size=5, color="red", opacity=0.8),
+        name=title
+    ))
+
+    # Add lines if enabled
+    if lines:
+        global_fig.add_trace(go.Scatter3d(
+            x=x, y=y, z=z,
+            mode='lines',
+            line=dict(color='blue', width=2),
+            name=f"{title} (Lines)"
+        ))
+
+    # Update axis limits
+    update_axis_limits(x, y, z)
+
+def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
+    """
+    Adds a 3D mesh plot to the global figure.
+    """
+    global global_fig
+
+    # Add mesh to global figure
+    global_fig.add_trace(go.Mesh3d(
+        x=x, y=y, z=z,
+        i=i, j=j, k=k,
+        opacity=0.5,
+        color='lightblue',
+        name=title
+    ))
+
+    # Update axis limits
+    update_axis_limits(x, y, z)
+
+def show_all_plots():
+    """
+    Displays the accumulated 3D plots.
+    """
+    global global_fig
+    global_fig.show()
 
 
 def inner_product(vec1, vec2):
