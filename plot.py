@@ -1,31 +1,15 @@
 from utils import *
+import numpy as np
 
 if __name__ == "__main__":
-    import numpy as np
+    # Add scatter points
+    PointLineObject(x=[0, 1, 2], y=[0, 1, 4], z=[0, 1, 8], title="Scatter 1")
+    PointLineObject(x=[3, 4, 5], y=[9, 16, 25], z=[27, 64, 125], title="Scatter 2")
 
-    # Example 1: Rotated Square Points
-    x = [0, 1, 1, 0]   # X-coordinates
-    y = [0, 0, 1, 1]   # Y-coordinates
-    z = [0, 0, 0, 0]   # Z-coordinates
+    # Add spheres (now stored in `mesh_objects`, not plotted immediately)
+    sphere(center=(0, 0, 0), radius=1.0, title="Sphere 1")
+    sphere(center=(3, 3, 3), radius=1.5, title="Sphere 2")
+    sphere(center=(-2, -2, 2), radius=10, title="Sphere 3")
 
-    #rotate_xyz(x, y, z, "z", 45)  # Rotate by 45 degrees around Z-axis
-    PointLineObject(x, y, z, title="Rotated Square", lines=True)
-    print(x, y, z)
-
-    # Example 2: Pyramid Mesh
-    x = [0, 1, 1, 0, 0.5]
-    y = [0, 0, 1, 1, 0.5]
-    z = [0, 0, 0, 0, 1]  # The peak
-
-    # Define faces using indices (each set forms a triangle)
-    i = [0, 0, 0, 1, 1, 2, 2, 3]
-    j = [1, 2, 3, 2, 3, 3, 0, 0]
-    k = [4, 4, 4, 4, 4, 4, 4, 4]  # The top vertex for each triangle
-
-    MeshObject(x, y, z, i, j, k, title="Pyramid Mesh")
-
-    # Example 3: Generate Sphere Meshes
-    create_sphere_mesh(num_spheres=5)
-
-    # Show all stored objects
+    # Now plot everything in a **single unified plot**
     show_all_plots()
