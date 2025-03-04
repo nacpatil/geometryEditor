@@ -1,21 +1,18 @@
-import plotly.graph_objects as go
-import numpy as np
-from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product, rotate_xyz, create_sphere_mesh, show_all_plots
+from utils import *
 
-# Example Usage
 if __name__ == "__main__":
     import numpy as np
+
+    # Example 1: Rotated Square Points
     x = [0, 1, 1, 0]   # X-coordinates
-    y = [0, 0, 1,  1]   # Y-coordinates
-    z = [0, 0, 0, 0] # Z-coordinates
+    y = [0, 0, 1, 1]   # Y-coordinates
+    z = [0, 0, 0, 0]   # Z-coordinates
 
-    rotate_xyz(x,y,z, "z", 45)
+    #rotate_xyz(x, y, z, "z", 45)  # Rotate by 45 degrees around Z-axis
+    PointLineObject(x, y, z, title="Rotated Square", lines=True)
+    print(x, y, z)
 
-    plot_3d_scatter(x, y, z)
-    print(x,y,z)
-    #exit()
-
-    # Define pyramid vertices
+    # Example 2: Pyramid Mesh
     x = [0, 1, 1, 0, 0.5]
     y = [0, 0, 1, 1, 0.5]
     z = [0, 0, 0, 0, 1]  # The peak
@@ -25,10 +22,10 @@ if __name__ == "__main__":
     j = [1, 2, 3, 2, 3, 3, 0, 0]
     k = [4, 4, 4, 4, 4, 4, 4, 4]  # The top vertex for each triangle
 
-    # Example usage
-    [x,y,z,i,j,k] = create_sphere_mesh()
+    MeshObject(x, y, z, i, j, k, title="Pyramid Mesh")
 
-    # Call the function
-    plot_3d_mesh(x, y, z, i, j, k, title="Pyramid Mesh")
+    # Example 3: Generate Sphere Meshes
+    create_sphere_mesh(num_spheres=5)
 
+    # Show all stored objects
     show_all_plots()
