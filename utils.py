@@ -1,75 +1,86 @@
 import plotly.graph_objects as go
-
+import trimesh
 import numpy as np
+
+# Global figure object to accumulate plots
+global_fig = go.Figure()
+
+def update_axis_limits(x, y, z):
+    """
+    Updates the global axis limits to ensure equal aspect ratio.
+    """
+    global global_fig
+
+    # Compute axis limits to keep equal scale
+    x_range = max(x) - min(x)
+    y_range = max(y) - min(y)
+    z_range = max(z) - min(z)
+    max_range = max(x_range, y_range, z_range) / 2
+
+    # Compute centers
+    x_mid = (max(x) + min(x)) / 2
+    y_mid = (max(y) + min(y)) / 2
+    z_mid = (max(z) + min(z)) / 2
+
+    # Apply equal ranges to all axes
+    global_fig.update_layout(
+        scene=dict(
+            xaxis=dict(title="X Axis", range=[x_mid - max_range, x_mid + max_range]),
+            yaxis=dict(title="Y Axis", range=[y_mid - max_range, y_mid + max_range]),
+            zaxis=dict(title="Z Axis", range=[z_mid - max_range, z_mid + max_range])
+        )
+    )
+
 def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
     """
-    Plots a 3D scatter plot using Plotly with optional lines connecting the points.
-
-    Args:
-        x (array-like): X-coordinates of points.
-        y (array-like): Y-coordinates of points.
-        z (array-like): Z-coordinates of points.
-        title (str): Title of the plot.
-        lines (bool): Whether to draw lines connecting the points. Default is True.
+    Adds a 3D scatter plot to the global figure with optional connecting lines.
     """
-    fig = go.Figure()
+    global global_fig
 
     # Scatter points
-    fig.add_trace(go.Scatter3d(
+    global_fig.add_trace(go.Scatter3d(
         x=x, y=y, z=z,
         mode='markers',
-        marker=dict(size=5, color="red", colorscale='Viridis', opacity=0.8),
-        name="Points"
+        marker=dict(size=5, color="red", opacity=0.8),
+        name=title
     ))
 
     # Add lines if enabled
     if lines:
-        fig.add_trace(go.Scatter3d(
+        global_fig.add_trace(go.Scatter3d(
             x=x, y=y, z=z,
             mode='lines',
             line=dict(color='blue', width=2),
-            name="Lines"
+            name=f"{title} (Lines)"
         ))
 
-    # Set labels and show plot
-    fig.update_layout(title=title, scene=dict(
-        xaxis_title="X Axis",
-        yaxis_title="Y Axis",
-        zaxis_title="Z Axis"
-    ))
-    fig.show()
-
+    # Update axis limits
+    update_axis_limits(x, y, z)
 
 def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
     """
-    Plots a 3D mesh using Plotly.
-
-    Args:
-        x (array-like): X-coordinates of vertices.
-        y (array-like): Y-coordinates of vertices.
-        z (array-like): Z-coordinates of vertices.
-        i (array-like): Indices of the first vertex in each triangle.
-        j (array-like): Indices of the second vertex in each triangle.
-        k (array-like): Indices of the third vertex in each triangle.
-        title (str): Title of the plot.
-
-    Example Usage:
-        plot_3d_mesh(x, y, z, i, j, k)
+    Adds a 3D mesh plot to the global figure.
     """
-    fig = go.Figure(data=[go.Mesh3d(
+    global global_fig
+
+    # Add mesh to global figure
+    global_fig.add_trace(go.Mesh3d(
         x=x, y=y, z=z,
         i=i, j=j, k=k,
         opacity=0.5,
-        color='lightblue'
-    )])
-
-    fig.update_layout(title=title, scene=dict(
-        xaxis_title="X Axis",
-        yaxis_title="Y Axis",
-        zaxis_title="Z Axis"
+        color='lightblue',
+        name=title
     ))
-    
-    fig.show()
+
+    # Update axis limits
+    update_axis_limits(x, y, z)
+
+def show_all_plots():
+    """
+    Displays the accumulated 3D plots.
+    """
+    global global_fig
+    global_fig.show()
 
 
 def inner_product(vec1, vec2):
@@ -132,3 +143,47 @@ def rotate_xyz(x, y, z, axis, angle_degrees):
     y[:] = rotated_coords[1].tolist()
     z[:] = rotated_coords[2].tolist()
  
+
+
+def create_sphere_mesh(num_spheres=20, subdivisions=2, radius=1.0, spacing=3.0):
+    """
+    Create multiple sphere meshes and return a single combined mesh.
+
+    Args:
+        num_spheres (int): Number of spheres to create.
+        subdivisions (int): Number of subdivisions for each icosphere.
+        radius (float): Radius of each sphere.
+        spacing (float): Distance between sphere centers.
+
+    Returns:
+        trimesh.Trimesh: A single mesh combining all spheres.
+    """
+    all_vertices = []
+    all_faces = []
+    offset = 0
+
+    for i in range(num_spheres):
+        # Create a sphere mesh
+        sphere = trimesh.creation.icosphere(subdivisions=subdivisions, radius=radius)
+
+        # Offset the sphere in the x-direction to space them apart
+        sphere.vertices += [i * spacing, 0, 0]
+
+        # Append vertices and faces
+        all_vertices.extend(sphere.vertices)
+        all_faces.extend(sphere.faces + offset)
+
+        # Update the vertex offset for face indices
+        offset += len(sphere.vertices)
+
+    # Create a combined mesh
+    combined_mesh = trimesh.Trimesh(vertices=all_vertices, faces=all_faces)
+    x, y, z = combined_mesh.vertices[:, 0].tolist(), combined_mesh.vertices[:, 1].tolist(), combined_mesh.vertices[:, 2].tolist()
+    i, j, k = combined_mesh.faces[:, 0].tolist(), combined_mesh.faces[:, 1].tolist(), combined_mesh.faces[:, 2].tolist()
+
+
+
+    # Return the extracted data as a list
+    result = [x, y, z, i, j, k]
+
+    return result
