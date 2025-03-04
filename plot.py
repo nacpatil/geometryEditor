@@ -1,5 +1,8 @@
 from utils import *
+from primitives import *
 import numpy as np
+from config import *
+
 
 if __name__ == "__main__":
     # Add scatter points

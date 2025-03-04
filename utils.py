@@ -1,10 +1,10 @@
 import open3d as o3d
 import trimesh
 import numpy as np
+from config import *
 
 # Global storage for Open3D visualization
-point_line_objects = []
-mesh_objects = []
+
 
 class PointLineObject:
     def __init__(self, x, y, z, title="Point-Line Object", lines=True):
@@ -60,23 +60,6 @@ class MeshObject:
         mesh.paint_uniform_color([0.5, 0.7, 0.9])  # Light blue color
         mesh.compute_vertex_normals()  # Enables smooth shading
         return mesh
-
-def sphere(center=(0, 0, 0), radius=1.0, subdivisions=3, title="3D Sphere"):
-    """
-    Adds a single sphere at a given location to `mesh_objects`, but does not plot immediately.
-    """
-    # Create a single sphere mesh
-    sphere = trimesh.creation.icosphere(subdivisions=subdivisions, radius=radius)
-    sphere.apply_translation(center)
-
-    # Extract vertex and face data
-    vertices = sphere.vertices
-    x, y, z = vertices[:, 0], vertices[:, 1], vertices[:, 2]
-    faces = sphere.faces
-    i, j, k = faces[:, 0], faces[:, 1], faces[:, 2]
-
-    # Store the mesh object instead of plotting it directly
-    mesh_objects.append(MeshObject(x, y, z, i, j, k, title))
 
 
 def get_scene_size():
