@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import numpy as np
-from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product
+from utils import  plot_3d_scatter, plot_3d_mesh, inner_product, outer_product, rotate_xyz
 
 # Example Usage
 if __name__ == "__main__":
@@ -8,8 +8,11 @@ if __name__ == "__main__":
     x = [0, 1, 1, 0]   # X-coordinates
     y = [0, 0, 1,  1]   # Y-coordinates
     z = [0, 0, 0, 0] # Z-coordinates
-    plot_3d_scatter(x, y, z)
 
+    rotate_xyz(x,y,z, "z", 45)
+
+    plot_3d_scatter(x, y, z)
+    print(x,y,z)
     exit()
 
     # Define pyramid vertices

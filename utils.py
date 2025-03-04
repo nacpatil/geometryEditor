@@ -1,7 +1,6 @@
 import plotly.graph_objects as go
 
-import plotly.graph_objects as go
-
+import numpy as np
 def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
     """
     Plots a 3D scatter plot using Plotly with optional lines connecting the points.
@@ -86,17 +85,16 @@ def outer_product(vec1, vec2):
     return np.outer(vec1, vec2)
 
 
-import numpy as np
-
-def rotate_coordinates(coords, axis, angle_degrees):
+def rotate_xyz(x, y, z, axis, angle_degrees):
     """
-    Rotates a list of (x, y, z) coordinates around the specified axis ('x', 'y', or 'z') 
-    by the given angle in degrees.
+    Rotates x, y, and z coordinate lists around the specified axis ('x', 'y', or 'z') 
+    by the given angle in degrees. Modifies the lists in-place.
 
-    :param coords: List of (x, y, z) tuples or NumPy array of shape (N, 3)
+    :param x: List of x-coordinates (modified in-place)
+    :param y: List of y-coordinates (modified in-place)
+    :param z: List of z-coordinates (modified in-place)
     :param axis: Axis to rotate around ('x', 'y', or 'z')
     :param angle_degrees: Rotation angle in degrees
-    :return: Rotated coordinates as a NumPy array
     """
     # Convert angle to radians
     angle = np.radians(angle_degrees)
@@ -123,18 +121,14 @@ def rotate_coordinates(coords, axis, angle_degrees):
     else:
         raise ValueError("Axis must be 'x', 'y', or 'z'")
 
-    # Convert input coordinates to NumPy array
-    coords_array = np.array(coords)
+    # Convert input lists to NumPy array (N, 3)
+    coords_array = np.array([x, y, z])
 
-    # Apply rotation
-    rotated_coords = np.dot(coords_array, rotation_matrix.T)
+    # Apply rotation (matrix multiplication)
+    rotated_coords = np.dot(rotation_matrix, coords_array)
 
-    return rotated_coords
-
-# Example usage
-coords = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # Example coordinates
-angle = 90  # Degrees
-axis = 'z'  # Rotate around z-axis
-
-rotated = rotate_coordinates(coords, axis, angle)
-print("Rotated Coordinates:\n", rotated)
+    # Modify input lists in-place
+    x[:] = rotated_coords[0].tolist()
+    y[:] = rotated_coords[1].tolist()
+    z[:] = rotated_coords[2].tolist()
+ 
