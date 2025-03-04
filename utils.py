@@ -1,6 +1,8 @@
 import plotly.graph_objects as go
 import trimesh
 import numpy as np
+
+
 def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
     """
     Plots a 3D scatter plot using Plotly with optional lines connecting the points.
@@ -14,11 +16,22 @@ def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
     """
     fig = go.Figure()
 
+    # Compute axis limits to keep equal scale
+    x_range = max(x) - min(x)
+    y_range = max(y) - min(y)
+    z_range = max(z) - min(z)
+    max_range = max(x_range, y_range, z_range) / 2
+
+    # Compute centers
+    x_mid = (max(x) + min(x)) / 2
+    y_mid = (max(y) + min(y)) / 2
+    z_mid = (max(z) + min(z)) / 2
+
     # Scatter points
     fig.add_trace(go.Scatter3d(
         x=x, y=y, z=z,
         mode='markers',
-        marker=dict(size=5, color="red", colorscale='Viridis', opacity=0.8),
+        marker=dict(size=5, color="red", opacity=0.8),
         name="Points"
     ))
 
@@ -31,18 +44,22 @@ def plot_3d_scatter(x, y, z, title="3D Scatter Plot", lines=True):
             name="Lines"
         ))
 
-    # Set labels and show plot
-    fig.update_layout(title=title, scene=dict(
-        xaxis_title="X Axis",
-        yaxis_title="Y Axis",
-        zaxis_title="Z Axis"
-    ))
+    # Correctly set the scene without nesting `scene` inside another `scene`
+    fig.update_layout(
+        title=title,
+        scene=dict(
+            xaxis=dict(title="X Axis", range=[x_mid - max_range, x_mid + max_range]),
+            yaxis=dict(title="Y Axis", range=[y_mid - max_range, y_mid + max_range]),
+            zaxis=dict(title="Z Axis", range=[z_mid - max_range, z_mid + max_range])
+        )
+    )
+
     fig.show()
 
 
 def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
     """
-    Plots a 3D mesh using Plotly.
+    Plots a 3D mesh using Plotly with equal aspect ratio for x, y, and z axes.
 
     Args:
         x (array-like): X-coordinates of vertices.
@@ -56,6 +73,7 @@ def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
     Example Usage:
         plot_3d_mesh(x, y, z, i, j, k)
     """
+    # Create mesh figure
     fig = go.Figure(data=[go.Mesh3d(
         x=x, y=y, z=z,
         i=i, j=j, k=k,
@@ -63,12 +81,27 @@ def plot_3d_mesh(x, y, z, i, j, k, title="3D Mesh Plot"):
         color='lightblue'
     )])
 
-    fig.update_layout(title=title, scene=dict(
-        xaxis_title="X Axis",
-        yaxis_title="Y Axis",
-        zaxis_title="Z Axis"
-    ))
-    
+    # Compute axis limits to keep equal scale
+    x_range = max(x) - min(x)
+    y_range = max(y) - min(y)
+    z_range = max(z) - min(z)
+    max_range = max(x_range, y_range, z_range) / 2
+
+    # Compute centers
+    x_mid = (max(x) + min(x)) / 2
+    y_mid = (max(y) + min(y)) / 2
+    z_mid = (max(z) + min(z)) / 2
+
+    # Apply equal ranges to all axes
+    fig.update_layout(
+        title=title,
+        scene=dict(
+            xaxis=dict(title="X Axis", range=[x_mid - max_range, x_mid + max_range]),
+            yaxis=dict(title="Y Axis", range=[y_mid - max_range, y_mid + max_range]),
+            zaxis=dict(title="Z Axis", range=[z_mid - max_range, z_mid + max_range])
+        )
+    )
+
     fig.show()
 
 
@@ -134,33 +167,45 @@ def rotate_xyz(x, y, z, axis, angle_degrees):
  
 
 
-def create_sphere_mesh(subdivisions=5, radius=1.0):
+def create_sphere_mesh(num_spheres=20, subdivisions=2, radius=1.0, spacing=3.0):
     """
-    Create a sphere mesh using trimesh and return vertices and face indices
-    in separate lists.
+    Create multiple sphere meshes and return a single combined mesh.
 
     Args:
-        subdivisions (int): Number of subdivisions for the icosphere.
-        radius (float): Radius of the sphere.
+        num_spheres (int): Number of spheres to create.
+        subdivisions (int): Number of subdivisions for each icosphere.
+        radius (float): Radius of each sphere.
+        spacing (float): Distance between sphere centers.
 
     Returns:
-        tuple: (x, y, z, i, j, k) where:
-            - x, y, z: Lists of vertex coordinates.
-            - i, j, k: Lists of triangle face indices.
+        trimesh.Trimesh: A single mesh combining all spheres.
     """
-    # Create the sphere mesh
-    sphere = trimesh.creation.icosphere(subdivisions=subdivisions, radius=radius)
+    all_vertices = []
+    all_faces = []
+    offset = 0
 
-    sphere.visual.vertex_colors = [255, 255, 255, 255]   # RGBA format, A=255 ensures full opacity
+    for i in range(num_spheres):
+        # Create a sphere mesh
+        sphere = trimesh.creation.icosphere(subdivisions=subdivisions, radius=radius)
 
-    # Extract vertex coordinates
-    vertices = sphere.vertices
-    x, y, z = vertices[:, 0].tolist(), vertices[:, 1].tolist(), vertices[:, 2].tolist()
+        # Offset the sphere in the x-direction to space them apart
+        sphere.vertices += [i * spacing, 0, 0]
 
-    # Extract face indices
-    faces = sphere.faces
-    i, j, k = faces[:, 0].tolist(), faces[:, 1].tolist(), faces[:, 2].tolist()
-    sphere.show()
+        # Append vertices and faces
+        all_vertices.extend(sphere.vertices)
+        all_faces.extend(sphere.faces + offset)
 
-    return x, y, z, i, j, k
- 
+        # Update the vertex offset for face indices
+        offset += len(sphere.vertices)
+
+    # Create a combined mesh
+    combined_mesh = trimesh.Trimesh(vertices=all_vertices, faces=all_faces)
+    x, y, z = combined_mesh.vertices[:, 0].tolist(), combined_mesh.vertices[:, 1].tolist(), combined_mesh.vertices[:, 2].tolist()
+    i, j, k = combined_mesh.faces[:, 0].tolist(), combined_mesh.faces[:, 1].tolist(), combined_mesh.faces[:, 2].tolist()
+
+
+
+    # Return the extracted data as a list
+    result = [x, y, z, i, j, k]
+
+    return result
