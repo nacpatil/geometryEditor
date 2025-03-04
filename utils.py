@@ -78,6 +78,7 @@ def sphere(center=(0, 0, 0), radius=1.0, subdivisions=3, title="3D Sphere"):
     # Store the mesh object instead of plotting it directly
     mesh_objects.append(MeshObject(x, y, z, i, j, k, title))
 
+
 def get_scene_size():
     """
     Estimates the size of the scene by checking the bounding box of all objects.
