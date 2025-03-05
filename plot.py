@@ -14,7 +14,6 @@ star_polygon = PolygonSurface(
     title="Star Polygon"
 )
 star_polygon.translate(4,0,0)
-show_all_plots()
 
 obb_cuboid(
     center=(2, 3, 4), 
@@ -23,15 +22,14 @@ obb_cuboid(
     v=(-1, 1, 0), # Perpendicular to u
     w=(0, 0, 1)   # Stays aligned with Z
 )
-show_all_plots()
-
- 
 
 
-PointLine(x=[0, 1, 2], y=[0, 1, 4], z=[0, 1, 8], title="Scatter 1")
-PointLine(x=[3, 4, 5], y=[9, 16, 25], z=[27, 64, 125], title="Scatter 2")
 
-# Add spheres (now stored in `mesh_objects`, not plotted immediately)
+myPoly1 = PointLine(x=[0, 1, 2], y=[0, 1, 4], z=[0, 1, 8], title="Scatter 1")
+myPoly2 = PointLine(x=[3, 4, 5], y=[9, 16, 25], z=[27, 64, 125], title="Scatter 2")
+print("PointLine", myPoly.x)
+
+
 sphere(center=(0, 0, 0), radius=1.0, title="Sphere 1")
 sphere(center=(3, 3, 3), radius=1.5, title="Sphere 2")
 sphere(center=(-2, -2, 2), radius=5, title="Sphere 3")

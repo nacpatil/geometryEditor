@@ -237,27 +237,21 @@ class PolygonSurface(TransformableObject):
 
 def get_scene_size():
     """
-    Estimates the size of the scene by checking the bounding box of all objects.
+    Estimates the size of the scene by checking the bounding box of all objects,
+    using `vertices` instead of `x, y, z`.
     """
-    all_x, all_y, all_z = [], [], []
-    
-    # Collect all points from both objects
-    for obj in point_line_objects + mesh_objects + polygon_objects:
-        all_x.extend(obj.x)
-        all_y.extend(obj.y)
-        all_z.extend(obj.z)
+    all_vertices = np.vstack([
+        obj.vertices for obj in point_line_objects + mesh_objects + polygon_objects
+        if hasattr(obj, "vertices") and obj.vertices.size > 0
+    ]) if (point_line_objects + mesh_objects + polygon_objects) else np.array([])
 
-    if not all_x:
+    if all_vertices.size == 0:
         return 5  # Default axis length if no objects exist
-    
 
-    max_value = max(
-        max(map(abs, all_x)),
-        max(map(abs, all_y)),
-        max(map(abs, all_z))
-    )
-    
+    max_value = np.max(np.abs(all_vertices))  # Find the max absolute coordinate value
+
     return max_value * 2  # Length is twice the max absolute coordinate value
+
 
 def create_xyz_axes(length):
     """
