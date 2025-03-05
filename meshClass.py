@@ -3,6 +3,8 @@ import trimesh
 import numpy as np
 from config import *
 import math
+import triangle as tr  # Install with `pip install triangle`
+
 
 class TransformableObject:
     """
@@ -124,6 +126,7 @@ class PointLine(TransformableObject):
         self.to_open3d()
 
 
+
 class MeshObject(TransformableObject):
     def __init__(self, x, y, z, i, j, k, title="Mesh Object", keypoint=None):
         super().__init__(x, y, z, keypoint)
@@ -158,6 +161,79 @@ class MeshObject(TransformableObject):
         self.mesh.compute_vertex_normals()
 
 
+
+class PolygonSurface(TransformableObject):
+    """
+    Represents a 2D closed polygon surface without boundary lines.
+    """
+
+    def __init__(self, x, y, z=0, title="2D Polygon Surface", keypoint=None):
+        """
+        Initializes a 2D polygon surface.
+
+        Args:
+            x (list): X-coordinates of vertices.
+            y (list): Y-coordinates of vertices.
+            z (float or list): Z-coordinates (default is 0 for a 2D surface).
+            title (str): Name of the polygon.
+            keypoint (list): Center of transformations (optional).
+        """
+        # Ensure Z is a list (or create it as flat)
+        if isinstance(z, (int, float)):
+            z = [z] * len(x)
+
+        super().__init__(x, y, z, keypoint)
+        self.title = title
+
+        # Ensure polygon closure (if not closed, add first vertex again)
+        if not (self.x[0] == self.x[-1] and self.y[0] == self.y[-1]):
+            self.x = np.append(self.x, self.x[0])
+            self.y = np.append(self.y, self.y[0])
+            self.z = np.append(self.z, self.z[0])
+            self.vertices = np.vstack((self.x, self.y, self.z)).T
+
+        # Create a single triangle mesh (no boundary)
+        self.mesh = self.to_open3d()
+
+        # Store this polygon in mesh_objects (same as MeshObject)
+        polygon_objects.append(self)
+
+    def to_open3d(self):
+        """
+        Converts the polygon into an Open3D TriangleMesh using `triangle` for non-convex triangulation.
+        """
+        # Prepare input for `triangle`
+        poly_data = {"vertices": self.vertices[:, :2], "segments": [[i, i + 1] for i in range(len(self.vertices) - 1)]}
+
+        # Run constrained Delaunay triangulation
+        triangulated = tr.triangulate(poly_data, 'p')  # 'p' ensures the polygon is respected
+
+        if "triangles" not in triangulated:
+            raise ValueError("Triangulation failed. Check input vertices.")
+
+        # Convert to Open3D
+        mesh = o3d.geometry.TriangleMesh()
+        mesh.vertices = o3d.utility.Vector3dVector(np.hstack((triangulated["vertices"], np.zeros((len(triangulated["vertices"]), 1)))))
+        triangles = np.array(triangulated["triangles"])
+
+        # Duplicate and flip the triangles to make it double-sided
+        flipped_triangles = np.flip(triangles, axis=1)  # Reverse the order of vertices
+        all_triangles = np.vstack((triangles, flipped_triangles))
+
+        mesh.triangles = o3d.utility.Vector3iVector(all_triangles)
+        mesh.paint_uniform_color([0.8, 0.8, 0.8])  # Light grey fill
+
+        return mesh
+
+
+    def update_geometry(self):
+        """
+        Updates the Open3D representation after transformations.
+        """
+        self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
+        self.mesh.compute_vertex_normals()
+
+
 def get_scene_size():
     """
     Estimates the size of the scene by checking the bounding box of all objects.
@@ -165,7 +241,7 @@ def get_scene_size():
     all_x, all_y, all_z = [], [], []
     
     # Collect all points from both objects
-    for obj in point_line_objects + mesh_objects:
+    for obj in point_line_objects + mesh_objects + polygon_objects:
         all_x.extend(obj.x)
         all_y.extend(obj.y)
         all_z.extend(obj.z)
@@ -237,6 +313,10 @@ def show_all_plots():
 
     for obj in mesh_objects:
         all_objects.append(obj.to_open3d())
+
+    for obj in polygon_objects:
+        all_objects.append(obj.to_open3d())
+
 
     # Display in Open3D viewer
     o3d.visualization.draw_geometries(all_objects)
