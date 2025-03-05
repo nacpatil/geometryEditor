@@ -6,7 +6,7 @@ from config import *
 # Global storage for Open3D visualization
 
 
-class PointLineObject:
+class PointLine:
     def __init__(self, x, y, z, title="Point-Line Object", lines=True):
         self.x = np.array(x)
         self.y = np.array(y)
@@ -111,6 +111,7 @@ def create_grid(full_size=10, step=1):
     Creates a grid (ground plane) for better visualization.
     """
     size = round(0.5*full_size)
+    step = round(size/10)+1
     lines = []
     points = []
     for i in range(-size, size + 1, step):

@@ -6,8 +6,8 @@ from config import *
 
 if __name__ == "__main__":
     # Add scatter points
-    PointLineObject(x=[0, 1, 2], y=[0, 1, 4], z=[0, 1, 8], title="Scatter 1")
-    PointLineObject(x=[3, 4, 5], y=[9, 16, 25], z=[27, 64, 125], title="Scatter 2")
+    PointLine(x=[0, 1, 2], y=[0, 1, 4], z=[0, 1, 8], title="Scatter 1")
+    PointLine(x=[3, 4, 5], y=[9, 16, 25], z=[27, 64, 125], title="Scatter 2")
 
     # Add spheres (now stored in `mesh_objects`, not plotted immediately)
     sphere(center=(0, 0, 0), radius=1.0, title="Sphere 1")

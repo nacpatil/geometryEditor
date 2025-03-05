@@ -3,7 +3,7 @@ from config import *
 from meshClass import *
  
 
-def sphere(center=(0, 0, 0), radius=1.0, subdivisions=3, title="3D Sphere"):
+def sphere(center=(0, 0, 0), radius=1.0, subdivisions=2, title="3D Sphere"):
     """
     Adds a single sphere at a given location to `mesh_objects`, but does not plot immediately.
     """
