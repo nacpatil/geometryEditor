@@ -2,15 +2,96 @@ import open3d as o3d
 import trimesh
 import numpy as np
 from config import *
+import math
 
-# Global storage for Open3D visualization
+class TransformableObject:
+    """
+    Base class that provides transformation functions for rotation and translation.
+    Used for both `PointLine` and `MeshObject`.
+    """
 
-
-class PointLine:
-    def __init__(self, x, y, z, title="Point-Line Object", lines=True):
+    def __init__(self, x, y, z, keypoint=None):
         self.x = np.array(x)
         self.y = np.array(y)
         self.z = np.array(z)
+        
+        # Default keypoint is the first vertex
+        self.keyPoint = np.array(keypoint if keypoint else [x[0], y[0], z[0]])
+
+        # Store original object vertices
+        self.vertices = np.vstack((self.x, self.y, self.z)).T
+
+    def rotate(self, axis="x", degrees=10):
+        """
+        Rotates the object around its keypoint.
+
+        Args:
+            axis (str): "x", "y", or "z" indicating the rotation axis.
+            degrees (float): Rotation angle in degrees.
+        """
+        radians = np.radians(degrees)  # Convert to radians
+        cos_a = math.cos(radians)
+        sin_a = math.sin(radians)
+
+        # Define rotation matrices
+        if axis == "x":
+            rot_matrix = np.array([
+                [1, 0,     0],
+                [0, cos_a, -sin_a],
+                [0, sin_a, cos_a]
+            ])
+        elif axis == "y":
+            rot_matrix = np.array([
+                [cos_a,  0, sin_a],
+                [0,      1, 0],
+                [-sin_a, 0, cos_a]
+            ])
+        elif axis == "z":
+            rot_matrix = np.array([
+                [cos_a, -sin_a, 0],
+                [sin_a, cos_a,  0],
+                [0,     0,      1]
+            ])
+        else:
+            raise ValueError("Invalid axis. Choose from 'x', 'y', or 'z'.")
+
+        # Translate object to keypoint, apply rotation, then translate back
+        self.vertices = (self.vertices - self.keyPoint) @ rot_matrix.T + self.keyPoint
+
+        # Update the object
+        self.update_geometry()
+
+    def translate(self, dx=0, dy=0, dz=0):
+        """
+        Moves the object by a given offset.
+
+        Args:
+            dx (float): Translation along X-axis.
+            dy (float): Translation along Y-axis.
+            dz (float): Translation along Z-axis.
+        """
+        translation_vector = np.array([dx, dy, dz])
+
+        # Apply translation
+        self.vertices += translation_vector
+
+        # Move keypoint as well
+        self.keyPoint += translation_vector
+
+        # Update the object
+        self.update_geometry()
+
+    def update_geometry(self):
+        """
+        Updates the object's geometry after transformation.
+        Must be implemented in subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement `update_geometry()`")
+
+
+class PointLine(TransformableObject):
+    def __init__(self, x, y, z, title="Point-Line Object", lines=True, keypoint=None):
+        super().__init__(x, y, z, keypoint)
         self.title = title
         self.lines = lines
         point_line_objects.append(self)
@@ -19,47 +100,62 @@ class PointLine:
         """
         Converts this object to an Open3D point cloud with optional lines.
         """
-        points = np.vstack((self.x, self.y, self.z)).T
         pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(points)
+        pcd.points = o3d.utility.Vector3dVector(self.vertices)
         pcd.paint_uniform_color([1, 0, 0])  # Red points
 
         objects = [pcd]
 
-        if self.lines and len(points) > 1:
-            lines = [[i, i + 1] for i in range(len(points) - 1)]
+        if self.lines and len(self.vertices) > 1:
+            lines = [[i, i + 1] for i in range(len(self.vertices) - 1)]
             line_set = o3d.geometry.LineSet()
-            line_set.points = o3d.utility.Vector3dVector(points)
+            line_set.points = o3d.utility.Vector3dVector(self.vertices)
             line_set.lines = o3d.utility.Vector2iVector(lines)
             line_set.paint_uniform_color([0, 0, 1])  # Blue lines
             objects.append(line_set)
 
         return objects
 
-class MeshObject:
-    def __init__(self, x, y, z, i, j, k, title="Mesh Object"):
-        self.x = np.array(x)
-        self.y = np.array(y)
-        self.z = np.array(z)
+    def update_geometry(self):
+        """
+        Updates the Open3D representation after transformations.
+        """
+        # Re-create the Open3D objects after transformation
+        self.to_open3d()
+
+
+class MeshObject(TransformableObject):
+    def __init__(self, x, y, z, i, j, k, title="Mesh Object", keypoint=None):
+        super().__init__(x, y, z, keypoint)
         self.i = np.array(i)
         self.j = np.array(j)
         self.k = np.array(k)
         self.title = title
+
+        # Store face data
+        self.triangles = np.vstack((self.i, self.j, self.k)).T
+
+        # Mesh storage
+        self.mesh = self.to_open3d()
         mesh_objects.append(self)
 
     def to_open3d(self):
         """
         Converts this object to an Open3D triangle mesh.
         """
-        vertices = np.vstack((self.x, self.y, self.z)).T
-        triangles = np.vstack((self.i, self.j, self.k)).T
-
         mesh = o3d.geometry.TriangleMesh()
-        mesh.vertices = o3d.utility.Vector3dVector(vertices)
-        mesh.triangles = o3d.utility.Vector3iVector(triangles)
+        mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
+        mesh.triangles = o3d.utility.Vector3iVector(self.triangles)
         mesh.paint_uniform_color([0.5, 0.7, 0.9])  # Light blue color
         mesh.compute_vertex_normals()  # Enables smooth shading
         return mesh
+
+    def update_geometry(self):
+        """
+        Updates the Open3D mesh after transformations.
+        """
+        self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
+        self.mesh.compute_vertex_normals()
 
 
 def get_scene_size():

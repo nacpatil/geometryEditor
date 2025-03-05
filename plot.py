@@ -17,6 +17,8 @@ if __name__ == "__main__":
     for i in range(0,5):
         for j in range(0,5):
             cuboid(center=(5+i*3, 8+j*3, 0), size=(2.0, 2.0, 4.0), title="3D Cuboid")
+    
+    mesh_objects[-1].rotate('x',45)
 
     # Now plot everything in a **single unified plot**
     show_all_plots()
