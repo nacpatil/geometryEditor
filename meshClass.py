@@ -4,7 +4,8 @@ import numpy as np
 from config import *
 import math
 import triangle as tr  # Install with `pip install triangle`
-
+from scipy.spatial import Delaunay
+import matplotlib.tri as tri
 
 class TransformableObject:
     """
@@ -162,6 +163,13 @@ class MeshObject(TransformableObject):
 
 
 
+def triangulate_polygon(vertices):
+    poly_dict = {'vertices': vertices, 'segments': np.array([[i, (i+1) % len(vertices)] for i in range(len(vertices))])}
+    triangulated = tr.triangulate(poly_dict, 'p')  # 'p' ensures holes/boundaries are respected
+    new_vertices = triangulated['vertices']
+    triangles = triangulated['triangles']
+    return new_vertices, triangles
+
 class PolygonSurface(TransformableObject):
     """
     Represents a 2D closed polygon surface without boundary lines.
@@ -185,41 +193,34 @@ class PolygonSurface(TransformableObject):
         super().__init__(x, y, z, keypoint)
         self.title = title
 
-        # Ensure polygon closure (if not closed, add first vertex again)
-        if not (self.x[0] == self.x[-1] and self.y[0] == self.y[-1]):
-            self.x = np.append(self.x, self.x[0])
-            self.y = np.append(self.y, self.y[0])
-            self.z = np.append(self.z, self.z[0])
-            self.vertices = np.vstack((self.x, self.y, self.z)).T
+ 
+
+        # Store as numpy array
+        self.vertices = np.vstack((x, y, z)).T
 
         # Create a single triangle mesh (no boundary)
         self.mesh = self.to_open3d()
 
-        # Store this polygon in mesh_objects (same as MeshObject)
+        # Store this polygon in polygon_objects
         polygon_objects.append(self)
 
     def to_open3d(self):
         """
-        Converts the polygon into an Open3D TriangleMesh using `triangle` for non-convex triangulation.
+        Converts the polygon into an Open3D TriangleMesh using `Delaunay` triangulation.
         """
-        # Prepare input for `triangle`
-        poly_data = {"vertices": self.vertices[:, :2], "segments": [[i, i + 1] for i in range(len(self.vertices) - 1)]}
-
-        # Run constrained Delaunay triangulation
-        triangulated = tr.triangulate(poly_data, 'p')  # 'p' ensures the polygon is respected
-
-        if "triangles" not in triangulated:
-            raise ValueError("Triangulation failed. Check input vertices.")
+        # Run Delaunay triangulation with only X, Y coordinates
+        vertices, triangles = triangulate_polygon(self.vertices[:, :2])
 
         # Convert to Open3D
         mesh = o3d.geometry.TriangleMesh()
-        mesh.vertices = o3d.utility.Vector3dVector(np.hstack((triangulated["vertices"], np.zeros((len(triangulated["vertices"]), 1)))))
-        triangles = np.array(triangulated["triangles"])
+        mesh.vertices = o3d.utility.Vector3dVector(np.hstack((vertices, np.zeros((len(vertices), 1)))))  # Add Z=0
+        mesh.triangles = o3d.utility.Vector3iVector(triangles)
 
         # Duplicate and flip the triangles to make it double-sided
         flipped_triangles = np.flip(triangles, axis=1)  # Reverse the order of vertices
         all_triangles = np.vstack((triangles, flipped_triangles))
 
+        # Assign final triangles
         mesh.triangles = o3d.utility.Vector3iVector(all_triangles)
         mesh.paint_uniform_color([0.8, 0.8, 0.8])  # Light grey fill
 
@@ -249,13 +250,14 @@ def get_scene_size():
     if not all_x:
         return 5  # Default axis length if no objects exist
     
-    # Compute scene bounds
-    max_extent = max(
-        max(all_x) - min(all_x),
-        max(all_y) - min(all_y),
-        max(all_z) - min(all_z)
+
+    max_value = max(
+        max(map(abs, all_x)),
+        max(map(abs, all_y)),
+        max(map(abs, all_z))
     )
-    return max_extent * 0.5  # Set axis length to half the max scene size
+    
+    return max_value * 2  # Length is twice the max absolute coordinate value
 
 def create_xyz_axes(length):
     """
