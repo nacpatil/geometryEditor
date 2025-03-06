@@ -23,6 +23,8 @@ class TransformableObject:
 
         # Store original object vertices
         self.vertices = np.vstack((self.x, self.y, self.z)).T
+        self.update_bounds()
+
 
     def rotate(self, axis="x", degrees=10):
         """
@@ -90,6 +92,48 @@ class TransformableObject:
         Must be implemented in subclasses.
         """
         raise NotImplementedError("Subclasses must implement `update_geometry()`")
+        
+    def update_bounds(self):
+        """ Updates and stores the bounding box limits based on object vertices. """
+        if self.vertices.size == 0:
+            return None  # No vertices present
+
+        mins, maxs = np.min(self.vertices, axis=0), np.max(self.vertices, axis=0)
+        self.x_min, self.y_min, self.z_min, self.x_max, self.y_max, self.z_max = *mins, *maxs
+        return (self.x_min, self.x_max), (self.y_min, self.y_max), (self.z_min, self.z_max)
+
+
+    @staticmethod
+    def check_collision(self, other):
+        """
+        Checks if this bounding box collides with another bounding box using the Separating Axis Theorem.
+        """
+        return (
+            self.x_max >= other.x_min and self.x_min <= other.x_max and
+            self.y_max >= other.y_min and self.y_min <= other.y_max and
+            self.z_max >= other.z_min and self.z_min <= other.z_max
+        )
+
+
+        return overlap_x and overlap_y and overlap_z  # True if boxes collide
+
+    @staticmethod
+    def check_all_collisions():
+        """
+        Checks for collisions among all objects (lines, meshes, polygons).
+        Returns a list of tuples (obj1, obj2) where collisions are detected.
+        """
+        all_objects = point_line_objects + mesh_objects + polygon_objects
+        collisions = []
+
+        for i in range(len(all_objects)):
+            for j in range(i + 1, len(all_objects)):
+                obj1, obj2 = all_objects[i], all_objects[j]
+
+                if TransformableObject.check_collision(obj1, obj2):
+                    collisions.append((obj1, obj2))
+
+        return collisions
 
 
 class PointLine(TransformableObject):
@@ -161,19 +205,8 @@ class MeshObject(TransformableObject):
         """
         self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
         self.mesh.compute_vertex_normals()
+        update_bounds(self)
 
-    def get_bounds(self):
-        """
-        Returns the latest x, y, z bounds of the mesh.
-        """
-        vertices = np.asarray(self.mesh.vertices)
-        if vertices.size == 0:
-            return None  # No vertices present
-
-        x_min, y_min, z_min = np.min(vertices, axis=0)
-        x_max, y_max, z_max = np.max(vertices, axis=0)
-        
-        return (x_min, x_max), (y_min, y_max), (z_min, z_max)
 
 
 def triangulate_polygon(vertices):

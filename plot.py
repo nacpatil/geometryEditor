@@ -3,6 +3,23 @@ from primitives import *
 import numpy as np
 from config import *
 import json
+
+
+# Create some objects
+line = PointLine([0, 1], [0, 1], [0, 0])  # Line in 3D
+polygon = PolygonSurface([0, 1, 1, 0], [0, 0, 1, 1])  # Square in XY plane
+mesh = MeshObject([0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 0, 0], [0, 1], [1, 2], [2, 3])  # Simple mesh
+
+# Check for collisions
+collisions = TransformableObject.check_all_collisions()
+if collisions:
+    print("Collisions detected:")
+    for obj1, obj2 in collisions:
+        print(f"- {obj1.title} collides with {obj2.title}")
+else:
+    print("No collisions found.")
+
+exit()
 # Define an oriented cuboid with a custom basis
 
 # Open and read the JSON file
