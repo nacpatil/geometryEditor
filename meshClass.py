@@ -104,36 +104,44 @@ class TransformableObject:
 
 
     @staticmethod
-    def check_collision(self, other):
-        """
-        Checks if this bounding box collides with another bounding box using the Separating Axis Theorem.
-        """
-        return (
-            self.x_max >= other.x_min and self.x_min <= other.x_max and
-            self.y_max >= other.y_min and self.y_min <= other.y_max and
-            self.z_max >= other.z_min and self.z_min <= other.z_max
-        )
+    def check_collision(obj1, obj2, tolerance=1e-6):
+        # Ensure bounding boxes are updated before checking
+        obj1.update_bounds()
+        obj2.update_bounds()
 
+        # Check for overlap along each axis
+        overlap_x = obj1.x_max >= obj2.x_min - tolerance and obj1.x_min <= obj2.x_max + tolerance
+        overlap_y = obj1.y_max >= obj2.y_min - tolerance and obj1.y_min <= obj2.y_max + tolerance
+        overlap_z = obj1.z_max >= obj2.z_min - tolerance and obj1.z_min <= obj2.z_max + tolerance
 
-        return overlap_x and overlap_y and overlap_z  # True if boxes collide
+        return overlap_x and overlap_y and overlap_z  # True if objects collide
+
 
     @staticmethod
     def check_all_collisions():
         """
-        Checks for collisions among all objects (lines, meshes, polygons).
-        Returns a list of tuples (obj1, obj2) where collisions are detected.
+        Checks for collisions among all objects and changes their color to red if colliding.
+        Returns a list of colliding object pairs.
         """
         all_objects = point_line_objects + mesh_objects + polygon_objects
         collisions = []
 
+        # Reset colors before checking
+        for obj in all_objects:
+            obj.set_color([0.5, 0.7, 0.9])  # Reset color to default (light blue)
+
+        # Check collisions and update color
         for i in range(len(all_objects)):
             for j in range(i + 1, len(all_objects)):
                 obj1, obj2 = all_objects[i], all_objects[j]
 
                 if TransformableObject.check_collision(obj1, obj2):
                     collisions.append((obj1, obj2))
+                    obj1.set_color([1, 0, 0])  # Set colliding objects to red
+                    obj2.set_color([1, 0, 0])  # Set colliding objects to red
 
         return collisions
+
 
 
 class PointLine(TransformableObject):
@@ -170,6 +178,14 @@ class PointLine(TransformableObject):
         # Re-create the Open3D objects after transformation
         self.to_open3d()
 
+    def set_color(self, color):
+        """
+        Sets a uniform color for the point cloud and lines.
+        """
+        self.pcd.paint_uniform_color(color)  # Update point cloud color
+
+        if self.lines and hasattr(self, 'line_set'):
+            self.line_set.paint_uniform_color(color)  # Update line color
 
 
 class MeshObject(TransformableObject):
@@ -205,7 +221,18 @@ class MeshObject(TransformableObject):
         """
         self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
         self.mesh.compute_vertex_normals()
-        update_bounds(self)
+        self.update_bounds()
+
+    def set_color(self, color):
+        """
+        Sets a uniform color for the mesh and ensures it's updated before rendering.
+        Args:
+            color (list): RGB color values (e.g., [1, 0, 0] for red).
+        """
+        if hasattr(self, "mesh") and self.mesh:
+            self.mesh.paint_uniform_color(color)  # Apply color change
+            self.mesh.compute_vertex_normals()  # Ensure Open3D updates the visualization
+
 
 
 
@@ -280,6 +307,12 @@ class PolygonSurface(TransformableObject):
         self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
         self.mesh.compute_vertex_normals()
 
+    def set_color(self, color):
+        """
+        Sets a uniform color for the polygon mesh.
+        """
+        self.mesh.paint_uniform_color(color)
+
 
 def get_scene_size():
     """
@@ -345,11 +378,18 @@ def create_grid(full_size=10, step=1):
 
 def show_all_plots():
     """
-    Displays the accumulated 3D plots using Open3D with visible XYZ axes and a ground grid.
+    Displays the accumulated 3D plots using Open3D, highlighting colliding objects in red.
     """
     length = get_scene_size()
-    all_objects = [create_xyz_axes(length), create_grid(1.5*length)]
-    
+    all_objects = [create_xyz_axes(length), create_grid(1.5 * length)]
+
+    # Detect collisions and highlight colliding objects in red
+    TransformableObject.check_all_collisions()
+
+    # Add objects with updated colors
+    for obj in point_line_objects + mesh_objects + polygon_objects:
+        all_objects.append(obj.mesh)  # Ensure we pass the updated mes
+    # Add objects to the scene
     for obj in point_line_objects:
         all_objects.extend(obj.to_open3d())
 
@@ -359,6 +399,6 @@ def show_all_plots():
     for obj in polygon_objects:
         all_objects.append(obj.to_open3d())
 
-
-    # Display in Open3D viewer
+    # Show visualization
     o3d.visualization.draw_geometries(all_objects)
+

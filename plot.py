@@ -5,19 +5,26 @@ from config import *
 import json
 
 
-# Create some objects
-line = PointLine([0, 1], [0, 1], [0, 0])  # Line in 3D
-polygon = PolygonSurface([0, 1, 1, 0], [0, 0, 1, 1])  # Square in XY plane
-mesh = MeshObject([0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 0, 0], [0, 1], [1, 2], [2, 3])  # Simple mesh
+# Create a grid of cuboids, with some overlapping to test collision
+for i in range(3):
+    for j in range(3):
+        # Introduce overlap conditionally
+        x_offset = 5 + i * 3
+        y_offset = 8 + j * 3
+        overlap_offset = 0 if (i + j) % 2 == 0 else -1  # Shift every other cube slightly
 
-# Check for collisions
-collisions = TransformableObject.check_all_collisions()
-if collisions:
-    print("Collisions detected:")
-    for obj1, obj2 in collisions:
-        print(f"- {obj1.title} collides with {obj2.title}")
-else:
-    print("No collisions found.")
+        # Call the cuboid function instead of direct instantiation
+        cuboid(center=(x_offset + overlap_offset, y_offset + overlap_offset, 0), 
+               size=(2.0, 2.0, 4.0), 
+               title=f"3D Cuboid {i}-{j}")
+
+        # Apply overlap offset to introduce collisions
+        mesh_objects[-1].translate(dx=overlap_offset, dy=overlap_offset, dz=0)
+
+# Display the 3D scene with collision detection
+show_all_plots()
+
+show_all_plots()
 
 exit()
 # Define an oriented cuboid with a custom basis
