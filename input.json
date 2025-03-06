@@ -1,0 +1,29 @@
+[
+  {
+    "name": "condenser",
+    "translationVector": [ -400, -500, -600 ]
+  },
+  {
+    "name": "frontPanel",
+    "attributes": {
+      "length": 550,
+      "width": 50,
+      "height": 800
+    },
+    "translationVector": [ 0, 0, 50 ],
+    "referencePoint": "condenser",
+    "cadFile": "hx_panel.stl"
+  },
+  {
+    "name": "rightPanel",
+    "attributes": {
+      "length": 550,
+      "width": 50,
+      "height": 800
+    },
+    "translationVector": [ 650, 50, 50 ],
+    "rotationVector": [ 0, 0, 90 ],
+    "referencePoint": "condenser",
+    "cadFile": "hx_panel.stl"
+  }
+]

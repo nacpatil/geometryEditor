@@ -44,7 +44,10 @@ def cuboid(center=(0, 0, 0), size=(1.0, 1.0, 1.0), title="3D Cuboid"):
     i, j, k = faces[:, 0], faces[:, 1], faces[:, 2]
 
     # Store the mesh object instead of plotting it directly
-    mesh_objects.append(MeshObject(x, y, z, i, j, k, title))
+    myObj = MeshObject(x, y, z, i, j, k, title)
+    myObj.volume = size[0]*size[1]*size[2]
+    mesh_objects.append(myObj)
+
 
 
 

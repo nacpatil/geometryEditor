@@ -141,6 +141,7 @@ class MeshObject(TransformableObject):
 
         # Mesh storage
         self.mesh = self.to_open3d()
+        self.volume = None
         mesh_objects.append(self)
 
     def to_open3d(self):
@@ -161,6 +162,18 @@ class MeshObject(TransformableObject):
         self.mesh.vertices = o3d.utility.Vector3dVector(self.vertices)
         self.mesh.compute_vertex_normals()
 
+    def get_bounds(self):
+        """
+        Returns the latest x, y, z bounds of the mesh.
+        """
+        vertices = np.asarray(self.mesh.vertices)
+        if vertices.size == 0:
+            return None  # No vertices present
+
+        x_min, y_min, z_min = np.min(vertices, axis=0)
+        x_max, y_max, z_max = np.max(vertices, axis=0)
+        
+        return (x_min, x_max), (y_min, y_max), (z_min, z_max)
 
 
 def triangulate_polygon(vertices):
